@@ -20,6 +20,8 @@ az storage container create --name tfstateprod --account-name mydlptfstateaccoun
 
 
 Step 4: Configure Terraform Backend:
+Create a file named backend.tf with the following content:
+
 ```python
 terraform {
   backend "azurerm" {
