@@ -1,20 +1,20 @@
-name: Deploy Pipeline
+name: deploy pipeline
 
 on:
-  push:
-    branches:
-      - main
+  workflow_dispatch:
 
 jobs:
-
   deploy_dev:
     runs-on: ubuntu-latest
-    environment: dev
     env:
-      ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
-      ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
-      ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
-      ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
+        ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
+        ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
+        ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
+        ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
+    defaults:
+      run:
+        working-directory: ./deploy/infrastructure/dev
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
@@ -30,25 +30,26 @@ jobs:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
       - name: Terraform Init
-        run: terraform -chdir=deplay/infrastructure/dev init
+        run: terraform init
 
       - name: Terraform Plan
-        run: terraform -chdir=deplay/infrastructure/dev plan
+        run: terraform plan
 
       - name: Terraform Apply
         if: github.ref == 'refs/heads/main'
-        run: terraform -chdir=deplay/infrastructure/dev apply -auto-approve
-
-
+        run: terraform apply -auto-approve
   deploy_qa:
     runs-on: ubuntu-latest
     needs: deploy_dev
-    environment: qa
     env:
-      ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
-      ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
-      ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
-      ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
+        ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
+        ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
+        ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
+        ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
+    defaults:
+      run:
+        working-directory: ./deploy/infrastructure/qa
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
@@ -64,25 +65,26 @@ jobs:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
       - name: Terraform Init
-        run: terraform -chdir=deplay/infrastructure/qa init
+        run: terraform init
 
       - name: Terraform Plan
-        run: terraform -chdir=deplay/infrastructure/qa plan
+        run: terraform plan
 
       - name: Terraform Apply
         if: github.ref == 'refs/heads/main'
-        run: terraform -chdir=deplay/infrastructure/qa apply -auto-approve
-
-
+        run: terraform apply -auto-approve
   deploy_prod:
     runs-on: ubuntu-latest
-    needs: deploy_qa
-    environment: production
+    needs: deploy_dev
     env:
-      ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
-      ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
-      ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
-      ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
+        ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
+        ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
+        ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
+        ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
+    defaults:
+      run:
+        working-directory: ./deploy/infrastructure/prod
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
@@ -98,13 +100,11 @@ jobs:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
       - name: Terraform Init
-        run: terraform -chdir=deplay/infrastructure/prod init
+        run: terraform init
 
       - name: Terraform Plan
-        run: terraform -chdir=deplay/infrastructure/prod plan
+        run: terraform plan
 
       - name: Terraform Apply
         if: github.ref == 'refs/heads/main'
-        run: terraform -chdir=deplay/infrastructure/prod apply -auto-approve
-
-
+        run: terraform apply -auto-approve
